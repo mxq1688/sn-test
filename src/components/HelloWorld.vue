@@ -10,7 +10,12 @@
         </div>
 
         <div ref="m2" class="m2">
-            <result-show @move="move($event)" @moveEnd="moveEnd($event)" :drawTargetEle="drawTargetEle" :cindex="cindex" :dLeft="dLeft" :dTop="dTop"/>
+            <result-show
+                    @move="move($event)"
+                    @moveEnd="moveEnd($event)"
+                    @setData="setData($event)"
+                    :drawTargetEle="drawTargetEle"
+                    :cindex="cindex" :dLeft="dLeft" :dTop="dTop"/>
         </div>
         <div class="m3">
             <attr-show @changeAttr="changeAttr($event)" v-bind.sync="attrData" :ctype="type" />
@@ -133,10 +138,10 @@ export default {
         this.attrData.sj = sj;
       }
     },
-    setData(vo, index){
-      this.cindex = index;
-      this.type = vo.type;
-      this.setAttr(vo.left,vo.top,vo.width, vo.height, vo.jd)
+    setData(data){
+      this.cindex = data.cindex;
+      this.type = data.vo.type;
+      this.setAttr(data.vo.left,data.vo.top,data.vo.width, data.vo.height, data.vo.jd)
     },
     judgeInside() {
       var wx = this.wx;

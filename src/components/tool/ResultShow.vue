@@ -55,9 +55,7 @@ export default {
           this.$emit('moveEnd', {cindex: index, sx: this.dLeft + vo.width/2, sy: this.dTop + vo.height/2})
       },
       setData(vo, index){
-          this.cindex = index;
-          this.type = vo.type;
-          this.setAttr(vo.left,vo.top,vo.width, vo.height, vo.jd)
+          this.$emit('setData', {cindex: index, vo: vo})
       },
   }
 }
