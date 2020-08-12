@@ -1,4 +1,4 @@
-# suning
+# sn
 
 ## Project setup
 ```

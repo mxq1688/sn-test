@@ -6,53 +6,14 @@
       </div>
       <div class="body">
         <div class="m1">
-          <div style="font-size: 14px;color: gray;padding: 8px;border-bottom: 1px solid lightgray">工具箱</div>
-          <div>
-            <div draggable="true" @dragend="dropEnd($event, 1)" class="xz" style="border-radius: 50%">
-
-            </div>
-            <div draggable="true"  @dragend="dropEnd($event, 2)" class="xz">
-
-            </div>
-            <div draggable="true"  @dragend="dropEnd($event, 3)" class="xz" style="border-radius: 15%">
-
-            </div>
-          </div>
+          <hold-all @dropEnd="dropEnd($event)" />
         </div>
-        <div ref="m2" class="m2">
-          <div draggable="true" @drag="move(vo,index, $event)" @dragend="moveEnd(vo,index, $event)" @click="setData(vo, index)" v-for="(vo,index) in drawTargetEle" :key="index" :style="{width: vo.width+'px', height: vo.height+'px',borderRadius: getType(vo.type), left: vo.left+'px', top: vo.top+'px', borderColor: cindex == index? 'red': '', transform: getRotate(vo.jd)}" style="border: 1px solid black;position: absolute">
 
-          </div>
+        <div ref="m2" class="m2">
+            <result-show @move="move($event)" @moveEnd="moveEnd($event)" :drawTargetEle="drawTargetEle" :cindex="cindex" :dLeft="dLeft" :dTop="dTop"/>
         </div>
         <div class="m3">
-          <div style="height: 20px; border-bottom: 1px solid lightgray">
-            属性查看器
-          </div>
-          <div>
-            <div>位置</div>
-            <div>
-              <div>
-                x <input type="number" v-model="sx">
-              </div>
-              <div>
-                y <input type="number" v-model="sy">
-              </div>
-            </div>
-          </div>
-          <div v-if="type !=1 ">
-            旋转 <input type="number" v-model="sj">
-          </div>
-          <div v-if="type ==1 ">
-            半径 <input type="number" v-model="sr">
-          </div>
-          <div v-if="type !=1 ">
-            <div>
-              宽 <input type="number" v-model="sw">
-            </div>
-            <div>
-              高 <input type="number" v-model="sh">
-            </div>
-          </div>
+            <attr-show @changeAttr="changeAttr($event)" v-bind.sync="attrData" :ctype="type" />
         </div>
       </div>
 
@@ -60,8 +21,12 @@
 </template>
 
 <script>
+  import HoldAll from './tool/HoldAll'
+  import AttrShow from "./tool/AttrShow";
+  import ResultShow from "./tool/ResultShow";
 export default {
   name: 'HelloWorld',
+  components: {HoldAll, AttrShow, ResultShow},
   props: {
     // msg: String
   },
@@ -77,15 +42,16 @@ export default {
       wy: 0,
       type: 1,
 
-      sx: 0,
-      sy: 0,
+      attrData: {
+        sx: 0,
+        sy: 0,
 
-      sr: 0,
+        sr: 0,
 
-      sw: 0,
-      sh: 0,
-      sj: 0,
-
+        sw: 0,
+        sh: 0,
+        sj: 0,
+      },
       cindex: '',
     }
   },
@@ -95,35 +61,8 @@ export default {
       this.dWidth = this.$refs.m2.clientWidth;
       this.dHeight = this.$refs.m2.clientHeight;
   },
-  watch:{
-    sx(nv){
-      this.drawTargetEle[this.cindex].left = nv;
-    },
-    sy(nv){
-      this.drawTargetEle[this.cindex].top = nv;
-    },
-    sw(nv, ov){
-      this.drawTargetEle[this.cindex].width = nv;
-      this.drawTargetEle[this.cindex].left = this.drawTargetEle[this.cindex].left - (nv-ov)/2
-    },
-    sh(nv, ov){
-      this.drawTargetEle[this.cindex].height = nv;
-      this.drawTargetEle[this.cindex].top = this.drawTargetEle[this.cindex].top - (nv-ov)/2
-    },
-    sj(nv){
-      this.drawTargetEle[this.cindex].jd = nv;
-    },
-    sr(nv, ov){
-      this.drawTargetEle[this.cindex].width = nv * 2;
-      this.drawTargetEle[this.cindex].height = nv * 2;
-      this.drawTargetEle[this.cindex].left = this.drawTargetEle[this.cindex].left - (nv-ov)
-      this.drawTargetEle[this.cindex].top = this.drawTargetEle[this.cindex].top - (nv-ov)
-    },
-  },
   methods: {
-    getRotate(jd){
-      return 'rotate('+ jd +'deg )';
-    },
+
     getType(type){
       switch (type) {
           case 1:
@@ -134,17 +73,18 @@ export default {
             return '15%';
       }
     },
-    dropEnd(e, type){
-      this.wx = e.x;
-      this.wy = e.y;
-      this.type = type
+    dropEnd(params){
+
+      this.wx = window.event.clientX
+      this.wy = window.event.clientY
+      this.type = params.type
       if(this.judgeInside()){
         var draw = {
           type: this.type,
-          width: 40,
-          height: 40,
-          left: this.wx - this.dLeft - 20,
-          top: this.wy - this.dTop - 20,
+          width: params.width,
+          height: params.height,
+          left: this.wx - this.dLeft - params.width/2,
+          top: this.wy - this.dTop - params.width/2,
           jd: 0,
         };
         this.drawTargetEle.push(draw)
@@ -152,16 +92,45 @@ export default {
         this.cindex = this.drawTargetEle.length - 1;
       }
     },
+      changeAttr(data){
+
+          switch (data.type) {
+            case 'sx':
+                this.drawTargetEle[this.cindex].left = this.attrData.sx;
+                break;
+            case 'sy':
+                this.drawTargetEle[this.cindex].top = this.attrData.sy;
+                break;
+              case 'sw':
+                  this.drawTargetEle[this.cindex].width = this.attrData.sw;
+                  this.drawTargetEle[this.cindex].left = this.drawTargetEle[this.cindex].left - (this.attrData.sw-data.ov)/2
+                  break;
+              case 'sh':
+                  this.drawTargetEle[this.cindex].height = this.attrData.sh;
+                  this.drawTargetEle[this.cindex].top = this.drawTargetEle[this.cindex].top - (this.attrData.sh-data.ov)/2
+                  break;
+
+              case 'sj':
+                  this.drawTargetEle[this.cindex].jd = this.attrData.sj;
+                  break;
+              case 'sr':
+                  this.drawTargetEle[this.cindex].width = this.attrData.sr * 2;
+                  this.drawTargetEle[this.cindex].height = this.attrData.sr * 2;
+                  this.drawTargetEle[this.cindex].left = this.drawTargetEle[this.cindex].left - (this.attrData.sr-data.ov)
+                  this.drawTargetEle[this.cindex].top  = this.drawTargetEle[this.cindex].top - (this.attrData.sr-data.ov)
+                  break;
+          }
+      },
     setAttr(sx, sy, sw, sh, sj){
 
-      this.sx = sx
-      this.sy = sy
+      this.attrData.sx = sx
+      this.attrData.sy = sy
       if(this.type == 1){
-        this.sr = sw/2;
+        this.attrData.sr = sw/2;
       }else{
-        this.sw = sw
-        this.sh = sh
-        this.sj = sj;
+        this.attrData.sw = sw
+        this.attrData.sh = sh
+        this.attrData.sj = sj;
       }
     },
     setData(vo, index){
@@ -181,18 +150,18 @@ export default {
       else
         return true;
     },
-    move(vo, index, e){
-      this.cindex = index;
-      this.sx = e.x - this.dLeft - vo.width/2
-      this.sy = e.y - this.dTop - vo.height/2
-
+    move(data){
+      this.cindex = data.cindex;
+      this.attrData.sx = window.event.clientX - data.sx;
+      this.attrData.sy = window.event.clientY - data.sy;
+        this.$forceUpdate()
     },
-    moveEnd(vo, index, e){
-      this.cindex = index;
-      this.sx = e.x - this.dLeft - vo.width/2
-      this.sy = e.y - this.dTop - vo.height/2
-      this.drawTargetEle[index].left = this.sx
-      this.drawTargetEle[index].top = this.sy
+    moveEnd(data){
+        this.cindex = data.cindex;
+        this.attrData.sx = window.event.clientX - data.sx;
+        this.attrData.sy = window.event.clientY - data.sy;
+      this.drawTargetEle[this.cindex].left = this.attrData.sx
+      this.drawTargetEle[this.cindex].top = this.attrData.sy
     }
   }
 }
